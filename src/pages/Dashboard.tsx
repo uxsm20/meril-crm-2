@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useDashboardData } from '../hooks/useDashboardData';
 import { AlertCircle, TrendingUp, Users, Package } from 'lucide-react';
 
 const data = [
@@ -11,36 +12,22 @@ const data = [
   { name: 'Jun', sales: 2390 },
 ];
 
-const stats = [
-  {
-    name: 'Total Sales',
-    value: '₹2.4M',
-    change: '+12.3%',
-    icon: TrendingUp,
-  },
-  {
-    name: 'Active Customers',
-    value: '1,234',
-    change: '+3.2%',
-    icon: Users,
-  },
-  {
-    name: 'Products',
-    value: '456',
-    change: '+2.4%',
-    icon: Package,
-  },
-  {
-    name: 'Pending Actions',
-    value: '23',
-    change: '-5.1%',
-    icon: AlertCircle,
-  },
-];
-
 export default function Dashboard() {
+  const [key, setKey] = useState(0); // Add a key to force re-render
+  const { title, stats } = useDashboardData();
+
+  useEffect(() => {
+    const handleRoleChange = () => {
+      setKey(prev => prev + 1); // Force re-render when role changes
+    };
+
+    window.addEventListener('role-changed', handleRoleChange);
+    return () => window.removeEventListener('role-changed', handleRoleChange);
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <div key={key} className="space-y-6">
+      <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -50,25 +37,20 @@ export default function Dashboard() {
               className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="mt-2 text-3xl font-semibold text-gray-900">
-                    {stat.value}
-                  </p>
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <Icon className="h-6 w-6 text-blue-600" />
+                  </div>
                 </div>
-                <Icon className="h-12 w-12 text-gray-400" />
+                <div className={`text-sm font-medium ${
+                  stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {stat.change}
+                </div>
               </div>
               <div className="mt-4">
-                <span
-                  className={`text-sm font-medium ${
-                    stat.change.startsWith('+')
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {stat.change}
-                </span>
-                <span className="text-sm text-gray-600"> from last month</span>
+                <h3 className="text-sm font-medium text-gray-500">{stat.name}</h3>
+                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
               </div>
             </div>
           );
@@ -76,7 +58,7 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Sales Overview</h3>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Performance Overview</h2>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
